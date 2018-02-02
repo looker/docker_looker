@@ -1,0 +1,7 @@
+license_key: "A1B2-D3E4-F199-8877-6655"
+host_url: "https://10.101.101.111:9999"
+user:
+  first_name: "John"
+  last_name: "Smith"
+  email: "user@company.com"
+  password: "password123"
