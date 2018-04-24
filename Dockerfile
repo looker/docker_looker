@@ -21,9 +21,9 @@ ENV KILL_ALL_PROCESSES_TIMEOUT=120
 ENV DEBIAN_FRONTEND noninteractive
 
 ENV VERSION 8
-ENV UPDATE 161
-ENV BUILD 12
-ENV SIG 2f38c3b165be4555a1fa6e98c45e0808
+ENV UPDATE 171
+ENV BUILD 11
+ENV SIG 512cd62ec5174c3487ac17c61aaa89e8
 
 ENV JAVA_HOME /usr/lib/jvm/java-${VERSION}-oracle
 ENV JRE_HOME ${JAVA_HOME}/jre
@@ -72,14 +72,17 @@ COPY \
   templates/looker_jar_loc.txt \
   $APP_HOME/
 
-ENV LOOKER_VERSION looker-5.6.14
+ENV LOOKER_VERSION looker-latest
 
 RUN mkdir /etc/service/looker
 COPY templates/looker_run.sh /etc/service/looker/run
 RUN chmod +x /etc/service/looker/run
 
 RUN set -a && \
- curl https://raw.githubusercontent.com/looker/customer-scripts/master/startup_scripts/looker > $APP_HOME/looker
+  curl https://raw.githubusercontent.com/looker/customer-scripts/master/startup_scripts/looker > $APP_HOME/looker
+
+RUN \ 
+  curl `cat $APP_HOME/looker_jar_loc.txt`/looker-latest.jar > $APP_HOME/looker.jar
 
 RUN \
   chown -R looker:looker $USER_HOME && \
