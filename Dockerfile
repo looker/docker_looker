@@ -1,110 +1,70 @@
-FROM phusion/baseimage:0.9.22
+FROM ubuntu:16.04
 
-RUN apt-get update && apt-get -y install \
-  ca-certificates \
-  curl \
-  phantomjs=2.1.1+dfsg-1 \
-  libc6-dev \
-  libfontconfig1 \
-  mysql-client \
-  tzdata \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN echo "[INFO]::[installing]::[base packages]" \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends --no-install-suggests \
+        software-properties-common libssl-dev libmcrypt-dev openssl ca-certificates \
+        git ntp curl tzdata bzip2 libfontconfig1 phantomjs mysql-client sudo jq \
+        fonts-freefont-otf chromium-browser \
+    && apt-get autoclean && apt-get clean && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && alias chromium='chromium-browser' && sudo ln -s /usr/bin/chromium-browser /usr/bin/chromium
 
-# Give children processes 1 minute to timeout
-ENV KILL_PROCESS_TIMEOUT=60
-# Give all other processes (such as those which have been forked) 2 minutes to timeout
-ENV KILL_ALL_PROCESSES_TIMEOUT=120
+RUN echo "[INFO]::[installing]::[java packages]" \
+    && apt-get update \
+    && add-apt-repository -y ppa:webupd8team/java \
+    && apt-get update \
+    && echo oracle-java8-installer shared/accepted-oracle-license-v1-1 boolean true | debconf-set-selections \
+    && echo oracle-java8-installer shared/present-oracle-license-v1-1 note | debconf-set-selections \
+    && yes | DEBIAN_FRONTEND=noninteractive apt-get install -y  --force-yes --no-install-recommends --no-install-suggests oracle-java8-installer \
+    && apt-get remove -y software-properties-common && apt-get remove -y software-properties-common && apt-get autoclean && apt-get clean && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+ARG LOOKER_VERSION="6.2"
+
+RUN echo "[INFO]::[configure]::[misc]" \
+    && cp /etc/sysctl.conf /etc/sysctl.conf.dist \
+    && echo "net.ipv4.tcp_keepalive_time=200" | tee -a /etc/sysctl.conf \
+    && echo "net.ipv4.tcp_keepalive_intvl=200" | tee -a /etc/sysctl.conf \
+    && echo "net.ipv4.tcp_keepalive_probes=5" | tee -a /etc/sysctl.conf \
+    && groupadd -g 1002 "looker" ||  true \
+    && useradd -m  -u 1002 -g "looker" "looker" || true\
+    && cp /etc/launchd.conf /etc/launchd.conf.dist || true \
+    && echo "limit      maxfiles 8192 8192"     | tee -a /etc/launchd.conf \
+    && echo "looker     soft     nofile     8192" | tee -a /etc/launchd.conf \
+    && echo "looker     hard     nofile     8192" | tee -a /etc/launchd.conf \
+    && echo '%looker ALL=(ALL) NOPASSWD:ALL' | tee -a /etc/sudoers
+
+RUN echo "[INFO]::[install]::[looker]" \
+    && mkdir -p /home/looker/looker \
+    && curl -o /home/looker/looker/looker.jar https://s3.amazonaws.com/download.looker.com/aeHee2HiNeekoh3uIu6hec3W/looker-6.2-latest.jar \
+    && curl -o /home/looker/looker/looker-service https://raw.githubusercontent.com/looker/customer-scripts/master/startup_scripts/looker
+
+COPY ./config /tmp/build-configs
+RUN echo "[INFO]::[configure]::[looker]" \
+    && chmod 0750 /home/looker/looker/looker-service \
+    && mv /tmp/build-configs/lookerstart.cfg /home/looker/looker/lookerstart.cfg \
+    && mv /tmp/build-configs/database.yml /home/looker/looker/database.yml \
+    && mv /tmp/build-configs/provision.yml /home/looker/looker/provision.yml \
+    && chown -R looker:looker /home/looker/looker
+
+#
+# Move in standard entrypoint script and configure to run through TINI for safety.
+#
+COPY bin/docker-entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ARG TINI_VERSION="v0.14.0"
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
 
 
-#FROM sgrio/java-oracle:jdk_8
-## start from https://github.com/sgr-io/docker-java-oracle/blob/master/jdk/Dockerfile
-ENV DEBIAN_FRONTEND noninteractive
+# /srv is owned by root:root out of the box. Add looker:looker /srv/data because Looker expects to write data to this volume
+RUN mkdir /srv/data
+RUN chown -R looker:looker /srv/data
 
-ENV VERSION 8
-ENV UPDATE 171
-ENV BUILD 11
-ENV SIG 512cd62ec5174c3487ac17c61aaa89e8
+USER looker
 
-ENV JAVA_HOME /usr/lib/jvm/java-${VERSION}-oracle
-ENV JRE_HOME ${JAVA_HOME}/jre
-
-# install of ca-certificates and curl moved to single RUN apt... command above
-#RUN apt-get update && apt-get install ca-certificates curl \
-#  -y --no-install-recommends && \
-RUN  curl --silent --location --retry 3 --cacert /etc/ssl/certs/GeoTrust_Global_CA.pem \
-  --header "Cookie: oraclelicense=accept-securebackup-cookie;" \
-  http://download.oracle.com/otn-pub/java/jdk/"${VERSION}"u"${UPDATE}"-b"${BUILD}"/"${SIG}"/jdk-"${VERSION}"u"${UPDATE}"-linux-x64.tar.gz \
-  | tar xz -C /tmp && \
-  mkdir -p /usr/lib/jvm && mv /tmp/jdk1.${VERSION}.0_${UPDATE} "${JAVA_HOME}" && \
-  apt-get autoclean && apt-get --purge -y autoremove && \
-  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-RUN update-alternatives --install "/usr/bin/java" "java" "${JRE_HOME}/bin/java" 1 && \
-  update-alternatives --install "/usr/bin/javaws" "javaws" "${JRE_HOME}/bin/javaws" 1 && \
-  update-alternatives --install "/usr/bin/javac" "javac" "${JAVA_HOME}/bin/javac" 1 && \
-  update-alternatives --set java "${JRE_HOME}/bin/java" && \
-  update-alternatives --set javaws "${JRE_HOME}/bin/javaws" && \
-  update-alternatives --set javac "${JAVA_HOME}/bin/javac"
-## end from https://github.com/sgr-io/docker-java-oracle/blob/master/jdk/Dockerfile
-
-ENV ROOT_HOME /root
-ENV USER_HOME /home/looker
-ENV APP_HOME $USER_HOME/looker
-
-# Unneeded - already Etc/UTC
-# RUN echo Etc/UTC > /etc/timezone 
-
-RUN groupadd looker && useradd -m -g looker -s /bin/bash looker
-
-# Replace content of policy-rc.d in order to allow services to start.
-# See here: https://askubuntu.com/questions/365911/why-the-services-do-not-start-at-installation
-COPY templates/policy-rc.d /usr/sbin/policy-rc.d
-COPY templates/90-looker.conf /etc/sysctl.d/90-looker.conf
-RUN chmod 644 /etc/sysctl.d/90-looker.conf
-
-RUN echo "looker     soft     nofile     4096\nlooker     hard     nofile     4096" >> /etc/security/limits.conf
-
-RUN mkdir -p $APP_HOME
-WORKDIR $APP_HOME
-COPY \
-  templates/provision.yml \
-  templates/lookerstart.cfg \
-  templates/looker_jar_loc.txt \
-  $APP_HOME/
-
-ENV LOOKER_VERSION looker-latest
-
-RUN mkdir /etc/service/looker
-COPY templates/looker_run.sh /etc/service/looker/run
-RUN chmod +x /etc/service/looker/run
-
-RUN set -a && \
-  curl https://raw.githubusercontent.com/looker/customer-scripts/master/startup_scripts/looker > $APP_HOME/looker
-
-RUN \ 
-  curl `cat $APP_HOME/looker_jar_loc.txt`/looker-latest.jar > $APP_HOME/looker.jar
-
-RUN \
-  chown -R looker:looker $USER_HOME && \
-  chmod 0755 $APP_HOME/looker
-
-VOLUME "$APP_HOME"
- 
-# Confifure cron to manage log files
-RUN /bin/bash -c "set -o pipefail && echo $'9 1 * * * find $APP_HOME/log -name \'looker.log.????????\' -mtime +7 -exec gzip \'{}\' \; > /dev/null\n\
-29 1 * * * find $APP_HOME/log -name \'looker.log.????????.gz\' -mtime +28 -exec rm -f \'{}\' \; > /dev/null'\
-  | crontab -u looker -" 
-
-# ENV INTERNODE_PORT 1551
-# EXPOSE 1551
-
-# ENV QUEUE_PORT 61616
-# EXPOSE 61616
-
-ENV PORT 9999
 EXPOSE 9999
 
-ENV API_PORT 19999
-EXPOSE 19999
+ENTRYPOINT ["/tini", "--"]
 
-CMD ["/sbin/my_init"]
+CMD ["/entrypoint.sh", "/home/looker/looker/looker-service", "start"]
