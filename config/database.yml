@@ -1,0 +1,6 @@
+dialect: mysql
+host: mysql
+username: looker
+password: bleepbloop
+database: looker
+port: 3306

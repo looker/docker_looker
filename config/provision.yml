@@ -1,0 +1,7 @@
+license_key: "REPLACE-WITH-YOUR-LICENSE-KEY"
+host_url: "http://localhost"
+user:
+  first_name: "Old"
+  last_name: "Greg"
+  email: "old.greg@looker.com"
+  password: "password-678$#-LOCAL-testing"
