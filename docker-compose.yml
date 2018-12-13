@@ -1,0 +1,43 @@
+version: '2.1'
+
+services:
+
+  lb:
+    image: dockercloud/haproxy:latest
+    links:
+      - looker
+    ports:
+     - "80:80"
+     - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - mysql
+      - looker
+
+  looker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./data/looker:/srv/data/looker
+    links:
+      - "mysql"
+    depends_on:
+      - mysql
+
+  #
+  # Need to build in order to remap the user ids for mounted volumes.
+  #
+  mysql:
+    image: mariadb
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data/mysql/data:/var/lib/mysql:rw
+    environment:
+      MYSQL_ROOT_PASSWORD: blahblahblah
+      MYSQL_DATABASE: looker
+      MYSQL_USER: looker
+      MYSQL_PASSWORD: bleepbloop
+      MYSQL_ALLOW_EMPTY_PASSWORD: 0
