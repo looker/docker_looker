@@ -38,3 +38,11 @@ in any way.
         docker images | grep looker
         docker rmi docker_looker_looker
         docker-compose up -d
+
+### Acknowledgements
+
+The majority of this work was done in [a Discourse thread here](https://discourse.looker.com/t/running-on-premise-looker-in-a-docker-container/5030/11).
+
+* [Mike DeAngelo](https://github.com/deangelo-llooker)
+* [Todd Foley](https://github.com/dev-head)
+* [Troy Harvey](https://github.com/troyharvey)
