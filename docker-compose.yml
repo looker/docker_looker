@@ -21,6 +21,7 @@ services:
       args:
         - LOOKER_LICENSE_KEY
         - LOOKER_LICENSE_EMAIL
+        - LOOKER_VERSION
     volumes:
       - ./data/looker:/srv/data/looker
     links:
@@ -28,9 +29,6 @@ services:
     depends_on:
       - mysql
 
-  #
-  # Need to build in order to remap the user ids for mounted volumes.
-  #
   mysql:
     image: mariadb
     ports:
