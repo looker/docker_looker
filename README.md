@@ -17,24 +17,32 @@ in any way.
 1.  Replace the `license_key` in `config/provision.yml` with a valid Looker license.
 1.  Set environment variables for your license key and company email address.
 
+        export LOOKER_VERSION=6.12
         export LOOKER_LICENSE_EMAIL=your.company@email.com
         export LOOKER_LICENSE_KEY=REPLACE-WITH-YOUR-LICENSE-KEY
 
 1.  Start Looker.
 
-        docker-compose up -d
+        docker-compose up
 
 1.  Open Looker in your browser.
 
         open http://localhost
 
-1.  Shut down Looker.
+1.  Login with this username and password:
 
-        docker-compose down
+        * email: `old.greg@looker.com`
+        * password: `password-678$#-LOCAL-testing`
 
-## Looker Version
+## Build Docker Image
 
-To change the Looker version, set the `LOOKER_VERSION` argument in the Dockerfile.
+Use this command to build the Docker image in your CI system.
+
+        docker build \
+            --build-arg LOOKER_LICENSE_KEY=REPLACE-WITH-LOOKER-LICENSE-KEY \
+            --build-arg LOOKER_LICENSE_EMAIL=your.company@email.com \
+            --build-arg LOOKER_VERSION=6.12 \
+            -t acme/looker:latest .
 
 ## Troubleshooting
 
