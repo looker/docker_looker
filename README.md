@@ -31,8 +31,8 @@ in any way.
 
 1.  Login with this username and password:
 
-        * email: `old.greg@looker.com`
-        * password: `password-678$#-LOCAL-testing`
+        old.greg@looker.com
+        password-678$#-LOCAL-testing
 
 ## Build Docker Image
 
