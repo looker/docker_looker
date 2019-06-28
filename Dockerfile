@@ -2,7 +2,7 @@ FROM ubuntu:latest
 # The ubuntu:latest tag points to the "latest LTS"
 # We use Ubuntu Linux (LTS releases) for our internal Looker hosting, and recommend it for customers who do not have a Linux preference.
 
-ARG LOOKER_VERSION="6.12"
+ARG LOOKER_VERSION="6.14"
 ARG LOOKER_LICENSE_KEY="REPLACE-WITH-LOOKER-LICENSE-KEY"
 ARG LOOKER_LICENSE_EMAIL="your.company@email.com"
 
