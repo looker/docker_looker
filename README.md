@@ -157,6 +157,12 @@ Chromium is used as a rendering engine for Looker. Chromium stores temporary fil
   name: dshm
 ```
 
+Alternatively, the shm size can be specified as a runtime argument:
+
+```
+--shm-size=1g
+```
+
 ## Useful Stuff
 
 When you have gone through several updates of the Docker image, the old images build up
