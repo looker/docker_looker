@@ -147,6 +147,22 @@ docker stop b9346ff139c4
 
 # Misc
 
+## Rendering 
+
+Chromium is used as a rendering engine for Looker. Chromium stores temporary files/cache inside the /dev/shm folder. By default, Docker only provisions 64 MB for the /dev mount point. If you are running into rendering issues, particularly for large dashboards or PNG/Visualization formats, it may be due to the limited space available in that folder. The solution is to create a new volume in memory and mount /dev/shm 
+
+```
+- emptyDir:
+    medium: Memory
+  name: dshm
+```
+
+Alternatively, the shm size can be specified as a runtime argument:
+
+```
+--shm-size=1g
+```
+
 ## Useful Stuff
 
 When you have gone through several updates of the Docker image, the old images build up
