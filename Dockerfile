@@ -21,9 +21,9 @@ ENV KILL_ALL_PROCESSES_TIMEOUT=120
 ENV DEBIAN_FRONTEND noninteractive
 
 ENV VERSION 8
-ENV UPDATE 171
-ENV BUILD 11
-ENV SIG 512cd62ec5174c3487ac17c61aaa89e8
+ENV UPDATE 291
+ENV BUILD 10
+ENV SIG d7fc238d0cbf4b0dac67be84580cfb4b
 
 ENV JAVA_HOME /usr/lib/jvm/java-${VERSION}-oracle
 ENV JRE_HOME ${JAVA_HOME}/jre
@@ -31,9 +31,9 @@ ENV JRE_HOME ${JAVA_HOME}/jre
 # install of ca-certificates and curl moved to single RUN apt... command above
 #RUN apt-get update && apt-get install ca-certificates curl \
 #  -y --no-install-recommends && \
-RUN  curl --silent --location --retry 3 --cacert /etc/ssl/certs/GeoTrust_Global_CA.pem \
+RUN curl --silent --location --retry 3 \
   --header "Cookie: oraclelicense=accept-securebackup-cookie;" \
-  http://download.oracle.com/otn-pub/java/jdk/"${VERSION}"u"${UPDATE}"-b"${BUILD}"/"${SIG}"/jdk-"${VERSION}"u"${UPDATE}"-linux-x64.tar.gz \
+  https://edelivery.oracle.com/otn-pub/java/jdk/"${VERSION}"u"${UPDATE}"-b"${BUILD}"/"${SIG}"/jdk-"${VERSION}"u"${UPDATE}"-linux-x64.tar.gz \
   | tar xz -C /tmp && \
   mkdir -p /usr/lib/jvm && mv /tmp/jdk1.${VERSION}.0_${UPDATE} "${JAVA_HOME}" && \
   apt-get autoclean && apt-get --purge -y autoremove && \
